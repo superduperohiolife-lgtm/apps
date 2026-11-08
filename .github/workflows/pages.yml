@@ -40,7 +40,8 @@ jobs:
               cp -r "$app/dist/." "_site/$app/"
             else
               mkdir -p "_site/$app"
-              rsync -a --exclude 'README.md' --exclude 'node_modules' "$app/" "_site/$app/"
+              cp -r "$app/." "_site/$app/"
+              rm -rf "_site/$app/README.md" "_site/$app/node_modules"
             fi
             cp "$app/app.json" "_site/$app/app.json"
           done
