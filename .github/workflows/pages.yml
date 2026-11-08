@@ -1,0 +1,53 @@
+name: Deploy apps to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 各アプリをビルドして _site に集める
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          for dir in */; do
+            app="${dir%/}"
+            case "$app" in tools|_site|node_modules) continue;; esac
+            [ -f "$app/app.json" ] || continue
+            if [ -f "$app/build.sh" ]; then
+              echo "::group::build $app"
+              (cd "$app" && bash build.sh)
+              echo "::endgroup::"
+              mkdir -p "_site/$app"
+              cp -r "$app/dist/." "_site/$app/"
+            else
+              mkdir -p "_site/$app"
+              rsync -a --exclude 'README.md' --exclude 'node_modules' "$app/" "_site/$app/"
+            fi
+            cp "$app/app.json" "_site/$app/app.json"
+          done
+          python3 tools/build_index.py _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
