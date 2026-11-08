@@ -5,6 +5,7 @@
 ## 公開の仕組み
 - `main` に push すると `.github/workflows/pages.yml` が動き、全アプリをビルドして Pages に公開する
 - 公開URL：`https://superduperohiolife-lgtm.github.io/apps/<アプリのフォルダ名>/`
+- 別リポジトリで公開しているアプリは `links.json` に `{title, description, icon, url}` で追加すると一覧に載る
 - トップページ（`https://superduperohiolife-lgtm.github.io/apps/`）は `tools/build_index.py` が各アプリの `app.json` から自動生成する
 
 ## 新しいアプリを作るとき

@@ -11,10 +11,19 @@ for meta in sorted(site.glob("*/app.json")):
         continue
     apps.append({"slug": meta.parent.name, **d})
 
+# 別リポジトリで公開しているアプリ（links.json）も一覧に載せる
+links = pathlib.Path(__file__).resolve().parent.parent / "links.json"
+if links.exists():
+    for d in json.loads(links.read_text(encoding="utf-8")):
+        apps.append({"slug": "", **d})
+
+def href(a):
+    return a["url"] if a.get("url") else f"./{a['slug']}/"
+
 cards = "\n".join(
-    f'<a class="card" href="./{html.escape(a["slug"])}/">'
+    f'<a class="card" href="{html.escape(href(a))}">'
     f'<span class="ic">{html.escape(a.get("icon", "📱"))}</span>'
-    f'<span><b>{html.escape(a.get("title", a["slug"]))}</b>'
+    f'<span><b>{html.escape(a.get("title", a["slug"] or a.get("url", "")))}</b>'
     f'<small>{html.escape(a.get("description", ""))}</small></span></a>'
     for a in apps) or "<p>まだアプリがない</p>"
 
