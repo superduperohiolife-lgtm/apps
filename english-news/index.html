@@ -393,6 +393,9 @@ let state, filter="todo", vkey="";
 function initVocab(){
   vkey="en-news-vocab-"+cur.meta.id;
   state=Object.assign({known:{},custom:[],deleted:{},hideJa:true},ls.get(vkey,{}));
+  // 単語リストが差し替えられたら（vocabVer が変わったら）、番号で持っている習得・削除の記録を捨てる。自分で追加した語は残す
+  const ver=cur.data.vocabVer||1;
+  if((state.ver||1)!==ver){state.known={};state.deleted={};state.ver=ver;ls.set(vkey,state);}
   filter="todo";$$("#vTabs button").forEach(b=>b.classList.toggle("on",b.dataset.f==="todo"));$("#q").value="";
 }
 const save=()=>ls.set(vkey,state);
