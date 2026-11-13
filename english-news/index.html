@@ -159,7 +159,9 @@
       <button data-f="todo" class="on">未習得</button>
       <button data-f="known">分かった</button>
       <button data-f="all">すべて</button>
+      <button data-f="deleted">削除</button>
     </div>
+    <div class="hint" style="margin:-2px 0 8px">「分かった ✓」＝レベル相応で覚えた語／「×」削除＝レベル不相応（易しすぎ等）の語。削除した語は「削除」タブから戻せる</div>
     <input type="search" id="q" placeholder="英語・意味・例文で検索" style="margin-bottom:10px">
     <details id="addBox">
       <summary>＋ 単語を追加</summary>
@@ -174,7 +176,9 @@
     <details>
       <summary>書き出し（コピー）</summary>
       <button class="btn sub" id="cpTodo">未習得をコピー</button>
-      <button class="btn sub" id="cpAll">すべてをコピー</button><span class="smsg" id="cpMsg"></span>
+      <button class="btn sub" id="cpAll">すべてをコピー</button>
+      <button class="btn sub" id="cpJudge">判定をコピー</button><span class="smsg" id="cpMsg"></span>
+      <div class="hint">「判定をコピー」は、分かった／削除／未習得の語の一覧。次回の単語選びの調整用</div>
       <textarea class="out" id="cpArea" readonly placeholder="コピーできない場合はここから手動で選択"></textarea>
     </details>
     <div class="note">例文は学習用に作成したもの（ニュース原文の引用ではない）</div>
@@ -393,13 +397,23 @@ let state, filter="todo", vkey="";
 function initVocab(){
   vkey="en-news-vocab-"+cur.meta.id;
   state=Object.assign({known:{},custom:[],deleted:{},hideJa:true},ls.get(vkey,{}));
-  // 単語リストが差し替えられたら（vocabVer が変わったら）、番号で持っている習得・削除の記録を捨てる。自分で追加した語は残す
+  // 習得・削除の記録は語そのもの（"w:"+英語）をキーに持つ。リストを差し替えても、同じ語の記録は残る
+  // 旧形式（番号キー s0, s1…）は、保存時と同じ版のリストならば語キーへ変換し、版が違えば対応が取れないので捨てる
   const ver=cur.data.vocabVer||1;
-  if((state.ver||1)!==ver){state.known={};state.deleted={};state.ver=ver;ls.set(vkey,state);}
+  if(!state.byWord){
+    const same=(state.ver||1)===ver;
+    const conv=o=>{const n={};Object.keys(o||{}).forEach(k=>{const m=/^s(\d+)$/.exec(k);
+      if(!m){if(!/^c\d+$/.test(k)||o===state.known)n[k]=true;}
+      else if(same&&cur.data.vocab[+m[1]])n["w:"+cur.data.vocab[+m[1]].en]=true;});return n;};
+    state.known=conv(state.known);state.deleted=conv(state.deleted);state.byWord=true;
+  }
+  state.ver=ver;ls.set(vkey,state);
   filter="todo";$$("#vTabs button").forEach(b=>b.classList.toggle("on",b.dataset.f==="todo"));$("#q").value="";
 }
 const save=()=>ls.set(vkey,state);
-const all=()=>cur.data.vocab.map((r,i)=>({id:"s"+i,en:r.en,ja:r.ja,use:r.use,src:r.src})).concat(state.custom).filter(w=>!state.deleted[w.id]);
+const seed=()=>cur.data.vocab.map(r=>({id:"w:"+r.en,en:r.en,ja:r.ja,use:r.use,src:r.src}));
+const all=()=>seed().concat(state.custom).filter(w=>!state.deleted[w.id]);
+const removed=()=>seed().filter(w=>state.deleted[w.id]);
 const plain=t=>String(t||"").replace(/\[\[|\]\]/g,"");
 function hl(w){
   const s=w.use||"";
@@ -413,39 +427,43 @@ function renderVocab(){
   if(!cur||!cur.data)return;
   const q=$("#q").value.trim().toLowerCase(), ws=all();
   const known=ws.filter(w=>state.known[w.id]).length;
-  $("#stats").textContent=`全${ws.length}語 ／ 未習得 ${ws.length-known} ／ 分かった ${known}`;
+  const del=removed();
+  $("#stats").textContent=`全${ws.length}語 ／ 未習得 ${ws.length-known} ／ 分かった ${known} ／ 削除 ${del.length}`;
   document.body.classList.toggle("hide",!!state.hideJa);$("#hideJa").checked=!!state.hideJa;
-  const rows=ws.filter(w=>filter==="all"||(filter==="known")===!!state.known[w.id])
+  const rows=(filter==="deleted"?del:ws.filter(w=>filter==="all"||(filter==="known")===!!state.known[w.id]))
     .filter(w=>!q||(w.en+w.ja+plain(w.use)).toLowerCase().includes(q));
   $("#list").innerHTML=rows.length?rows.map(w=>{
     const k=!!state.known[w.id];
-    return `<div class="card ${k?"known":""}" data-card="${w.id}">
+    return `<div class="card ${k&&filter!=="deleted"?"known":""}" data-card="${esc(w.id)}">
       ${w.use?`<p class="sent">${hl(w)}</p>`:""}
       <div class="word"><span class="en">${esc(w.en)}</span><span class="ja">${esc(w.ja)}</span></div>
       <div class="foot">${w.src?`<span class="src">${esc(w.src)}</span>`:""}
-        <div class="acts"><button class="ok" data-id="${w.id}">${k?"未習得に戻す":"分かった ✓"}</button>
-        <button class="del" data-del="${w.id}" title="削除">×</button></div></div></div>`;}).join("")
-    :`<div class="msg">${filter==="todo"?"未習得の単語はなし 🎉":"該当なし"}</div>`;
+        <div class="acts">${filter==="deleted"?`<button class="ok" data-restore="${esc(w.id)}">戻す</button>`
+          :`<button class="ok" data-id="${esc(w.id)}">${k?"未習得に戻す":"分かった ✓"}</button>
+        <button class="del" data-del="${esc(w.id)}" title="削除（レベル不相応）">×</button>`}</div></div></div>`;}).join("")
+    :`<div class="msg">${filter==="todo"?"未習得の単語はなし 🎉":filter==="deleted"?"削除した単語はなし":"該当なし"}</div>`;
 }
 let undoFn=null,toastT=null;
 function toast(msg,fn){undoFn=fn;$("#toastMsg").textContent=msg;$("#toast").classList.add("on");
   clearTimeout(toastT);toastT=setTimeout(()=>{$("#toast").classList.remove("on");undoFn=null;},4000);}
 $("#undo").onclick=()=>{if(undoFn){undoFn();undoFn=null;}$("#toast").classList.remove("on");};
-function animateOut(id,after){const c=document.querySelector(`[data-card="${id}"]`);
+function animateOut(id,after){const c=[...document.querySelectorAll("[data-card]")].find(x=>x.dataset.card===id);
   if(!c||filter==="all"){after();return;} c.classList.add("out");setTimeout(after,230);}
 $$("#vTabs button").forEach(b=>b.onclick=()=>{$$("#vTabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");filter=b.dataset.f;renderVocab();});
 $("#q").oninput=renderVocab;
 $("#hideJa").onchange=e=>{state.hideJa=e.target.checked;save();renderVocab();};
 $("#list").onclick=e=>{
   if(e.target.classList.contains("ja")&&state.hideJa){e.target.classList.toggle("shown");return;}
-  const id=e.target.dataset.id,d=e.target.dataset.del;
+  const id=e.target.dataset.id,d=e.target.dataset.del,rs=e.target.dataset.restore;
+  if(rs){animateOut(rs,()=>{delete state.deleted[rs];save();renderVocab();
+    toast("未習得に戻した",()=>{state.deleted[rs]=true;save();renderVocab();});});return;}
   if(id){const was=!!state.known[id];
     animateOut(id,()=>{was?delete state.known[id]:state.known[id]=true;save();renderVocab();
       toast(was?"未習得に戻した":"分かった に移動",()=>{was?state.known[id]=true:delete state.known[id];save();renderVocab();});});}
   if(d){
     if(e.target.dataset.armed){const cust=state.custom.find(w=>w.id===d);
-      animateOut(d,()=>{state.deleted[d]=true;state.custom=state.custom.filter(w=>w.id!==d);save();renderVocab();
-        toast("削除した",()=>{delete state.deleted[d];if(cust)state.custom.push(cust);save();renderVocab();});});
+      animateOut(d,()=>{if(cust)state.custom=state.custom.filter(w=>w.id!==d);else{state.deleted[d]=true;delete state.known[d];}save();renderVocab();
+        toast("削除した",()=>{if(cust)state.custom.push(cust);else delete state.deleted[d];save();renderVocab();});});
     }else{e.target.dataset.armed="1";e.target.textContent="削除?";setTimeout(()=>{if(e.target.isConnected){delete e.target.dataset.armed;e.target.textContent="×";}},2500);}
   }
 };
@@ -464,6 +482,18 @@ async function copy(onlyTodo){
   setTimeout(()=>$("#cpMsg").textContent="",2000);
 }
 $("#cpTodo").onclick=()=>copy(true);$("#cpAll").onclick=()=>copy(false);
+// 判定の書き出し：過去のリストで付けた記録（今のリストに無い語）も含める
+$("#cpJudge").onclick=async()=>{
+  const words=o=>Object.keys(o||{}).filter(k=>k.startsWith("w:")).map(k=>k.slice(2));
+  const kn=words(state.known).filter(w=>!state.deleted["w:"+w]),dl=words(state.deleted);
+  const todo=all().filter(w=>!state.known[w.id]).map(w=>w.en);
+  const t=[`[English News 単語判定] ${cur.meta.id}（${cur.meta.date||""}）`,
+    `■分かった＝レベル相応（${kn.length}）`,...kn,``,`■削除＝レベル不相応（${dl.length}）`,...dl,``,`■未習得（${todo.length}）`,...todo].join("\n");
+  $("#cpArea").value=t;
+  try{await navigator.clipboard.writeText(t);$("#cpMsg").textContent="コピー済み";}
+  catch(e){$("#cpMsg").textContent="下の欄から手動でコピー";}
+  setTimeout(()=>$("#cpMsg").textContent="",2000);
+};
 
 /* ---------- 起動 ---------- */
 setRate(RATES.includes(ui.rate)?ui.rate:1);applyUi();loadTop(false);
