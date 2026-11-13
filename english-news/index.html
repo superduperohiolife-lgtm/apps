@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>English News</title>
+<style>
+  :root{--bg:#f6f5f1;--card:#fff;--ink:#1f2328;--sub:#6b6f76;--line:#e3e1da;--acc:#2f6f5e;--acc2:#e8f1ee;--hl:#fff1b8;--hlink:#7a4b00;--known:#b9bcc2;--past:#2f6f5e;--cur:#ffd24a;--curink:#3a2a00}
+  @media (prefers-color-scheme:dark){:root{--bg:#16181b;--card:#1f2226;--ink:#e8e9eb;--sub:#9aa0a8;--line:#30343a;--acc:#6fc3a8;--acc2:#20302b;--hl:#4a3d12;--hlink:#ffd877;--known:#5c6168;--past:#6fc3a8;--cur:#ffd24a;--curink:#2a1e00}}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Meiryo UI","Hiragino Sans",system-ui,sans-serif;font-size:15px;line-height:1.5}
+  button{font:inherit;cursor:pointer}
+  .en-font{font-family:Calibri,"Segoe UI",system-ui,sans-serif}
+  header{position:sticky;top:0;z-index:6;background:var(--bg);padding:10px 14px 8px;border-bottom:1px solid var(--line)}
+  .hrow{display:flex;align-items:center;gap:8px}
+  h1{font-size:18px;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .back{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+  .tabs{display:flex;gap:6px;margin-top:8px}
+  .tabs button{flex:1;padding:7px 0;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;font-size:13px}
+  .tabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  main{padding:12px 14px 150px;max-width:760px;margin:0 auto}
+  .hidden{display:none!important}
+  .msg{color:var(--sub);text-align:center;padding:30px 0}
+  .err{color:#c0392b}
+  /* Top */
+  .sess{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;color:var(--ink)}
+  .sess .no{width:38px;height:38px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+  .sess.blank{opacity:.5;cursor:default;border-style:dashed}
+  .sess.blank .no{background:var(--known)}
+  .sess .tt{font-weight:700}
+  .sess .meta{font-size:12px;color:var(--sub)}
+  .link{background:none;border:none;color:var(--sub);font-size:12px;text-decoration:underline;padding:6px 0}
+  input[type=search],input[type=text],input[type=url],textarea.in{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+  .btn{padding:8px 12px;border-radius:8px;border:none;background:var(--acc);color:#fff;font-size:13px;margin-top:8px}
+  .btn.sub{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .hint{font-size:11px;color:var(--sub);margin-top:4px}
+  /* Player */
+  .player{margin-top:8px}
+  .prow{display:flex;align-items:center;gap:6px}
+  .pbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 9px;font-size:13px;white-space:nowrap}
+  .pbtn.main{background:var(--acc);border-color:var(--acc);color:#fff;min-width:54px;font-weight:700}
+  .pbtn.on{background:var(--acc2);border-color:var(--acc);color:var(--acc)}
+  .time{font-size:12px;color:var(--sub);margin-left:auto;font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;margin:8px 0 2px;accent-color:var(--acc)}
+  /* Script */
+  .sec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+  .sec.ad{opacity:.75}
+  .sec h2{font-size:13px;margin:0 0 6px;color:var(--acc);display:flex;gap:8px;align-items:baseline;cursor:pointer}
+  .sec h2 small{color:var(--sub);font-weight:400;font-variant-numeric:tabular-nums}
+  .ln{font-family:Calibri,"Segoe UI",system-ui,sans-serif;font-size:19px;line-height:1.6;margin:0 0 8px;padding:2px 6px;border-radius:6px;border-left:3px solid transparent}
+  .ln.on{background:var(--acc2);border-left-color:var(--acc)}
+  .w{cursor:pointer;border-radius:4px;padding:0 1px}
+  .w.past{color:var(--past)}
+  .w.cur{background:var(--cur);color:var(--curink)}
+  body.noscript #script{display:none}
+  /* Subtitle bar */
+  #subbar{position:fixed;left:0;right:0;bottom:0;z-index:7;background:rgba(18,20,22,.94);color:#f2f2f2;padding:12px 16px calc(14px + env(safe-area-inset-bottom));min-height:84px;display:flex;align-items:center;justify-content:center}
+  #subtxt{font-family:Calibri,"Segoe UI",system-ui,sans-serif;font-size:21px;line-height:1.45;text-align:center;max-width:760px}
+  #subtxt .w{cursor:default}
+  #subtxt .w.past{color:#7fe0c2}
+  #subtxt .w.cur{background:var(--cur);color:#2a1e00}
+  /* Vocab (元アプリ準拠) */
+  .stats{font-size:12px;color:var(--sub);margin:8px 0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .toggle{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:4px;white-space:nowrap}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px 10px;margin-bottom:10px;transition:opacity .25s,transform .25s}
+  .card.out{opacity:0;transform:translateX(40px)}
+  .sent{font-family:Calibri,"Segoe UI",system-ui,sans-serif;font-size:20px;line-height:1.55;margin:0 0 12px}
+  .sent mark{background:var(--hl);color:var(--hlink);font-weight:700;padding:0 3px;border-radius:4px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+  .word{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;border-top:1px dashed var(--line);padding-top:8px}
+  .en{font-family:Calibri,"Segoe UI",system-ui,sans-serif;font-weight:700;font-size:15px;color:var(--acc)}
+  .ja{font-size:14px}
+  .hide .ja{filter:blur(6px);cursor:pointer;user-select:none;-webkit-user-select:none}
+  .ja.shown{filter:none!important}
+  .foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px}
+  .src{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--acc2);color:var(--acc)}
+  .acts{display:flex;gap:6px;align-items:center;margin-left:auto}
+  .ok{padding:7px 14px;border-radius:8px;border:none;background:var(--acc);color:#fff;font-size:13px;white-space:nowrap}
+  .card.known .ok{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .card.known .sent,.card.known .en,.card.known .ja{color:var(--known)}
+  .card.known .sent mark{background:transparent;color:var(--known)}
+  .del{border:none;background:none;color:var(--sub);font-size:16px;padding:4px 6px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+  summary{cursor:pointer;font-weight:700;font-size:14px}
+  details input,details textarea.in{margin-top:6px}
+  .smsg{font-size:12px;color:var(--acc);margin-left:6px}
+  textarea.out{width:100%;height:120px;margin-top:8px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);padding:8px}
+  .note{font-size:11px;color:var(--sub);text-align:center;margin-top:16px}
+  #toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,160px);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:999px;font-size:13px;display:flex;gap:12px;align-items:center;transition:transform .25s;z-index:10;max-width:92vw}
+  #toast.on{transform:translate(-50%,0)}
+  #toast button{background:none;border:none;color:#6fc3a8;font-weight:700;padding:0}
+  @media (prefers-color-scheme:dark){#toast button{color:#1f6b55}}
+</style>
+</head>
+<body class="hide">
+<header>
+  <div class="hrow">
+    <button class="back hidden" id="back">← Top</button>
+    <h1 id="title">English News</h1>
+  </div>
+  <div class="tabs hidden" id="modeTabs">
+    <button data-m="news" class="on">News</button>
+    <button data-m="vocab">単語</button>
+  </div>
+  <div class="player hidden" id="player">
+    <div class="prow">
+      <button class="pbtn main" id="play">▶</button>
+      <button class="pbtn" id="rw">−5秒</button>
+      <button class="pbtn" id="ff">＋5秒</button>
+      <button class="pbtn" id="speed">1.0x</button>
+      <span class="time" id="time">0:00 / 0:00</span>
+    </div>
+    <input type="range" id="seek" min="0" max="100" step="0.1" value="0" aria-label="再生位置">
+    <div class="prow">
+      <button class="pbtn on" id="tSub">字幕バー</button>
+      <button class="pbtn on" id="tScript">スクリプト</button>
+      <button class="pbtn on" id="tFollow">自動スクロール</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- 接続設定 -->
+  <section id="vSetup" class="hidden">
+    <div class="box">
+      <b>接続設定</b>
+      <p class="hint" style="font-size:13px">音声とスクリプトは非公開の Google Drive に保存されている。配信用 GAS Web App の URL（…/exec）を一度だけ貼り付ける。URL はこの端末のブラウザ内にのみ保存。</p>
+      <input type="url" id="gasUrl" placeholder="https://script.google.com/macros/s/…/exec">
+      <button class="btn" id="saveGas">保存して開く</button><span class="smsg err" id="setupMsg"></span>
+    </div>
+  </section>
+
+  <!-- Top -->
+  <section id="vTop" class="hidden">
+    <div id="sessList"></div>
+    <div style="text-align:center"><button class="link" id="reconf">接続設定を変更</button> <button class="link" id="reload">最新に更新</button></div>
+  </section>
+
+  <!-- News -->
+  <section id="vNews" class="hidden">
+    <div id="newsMsg" class="msg"></div>
+    <div id="script"></div>
+    <div class="note">スクリプトは録音を機械で聞き取り校正したもの。人名などに誤りが残る可能性あり</div>
+  </section>
+
+  <!-- 単語 -->
+  <section id="vVocab" class="hidden">
+    <div class="stats"><span id="stats"></span><label class="toggle"><input type="checkbox" id="hideJa">意味を隠す</label></div>
+    <div class="tabs" id="vTabs" style="margin:0 0 8px">
+      <button data-f="todo" class="on">未習得</button>
+      <button data-f="known">分かった</button>
+      <button data-f="all">すべて</button>
+    </div>
+    <input type="search" id="q" placeholder="英語・意味・例文で検索" style="margin-bottom:10px">
+    <details id="addBox">
+      <summary>＋ 単語を追加</summary>
+      <input type="text" id="aEn" placeholder="英語（例: mull over）">
+      <input type="text" id="aJa" placeholder="意味（例: じっくり検討する）">
+      <textarea class="in" id="aUse" rows="2" placeholder="例文（例: It was a decision she had [[mulled over]] for months.）"></textarea>
+      <div class="hint">強調したい部分は [[ ]] で囲む。省略時は英語と一致する部分を自動で強調</div>
+      <input type="text" id="aSrc" placeholder="出典メモ（任意）">
+      <button class="btn" id="addBtn">追加</button><span class="smsg" id="addMsg"></span>
+    </details>
+    <div id="list"></div>
+    <details>
+      <summary>書き出し（コピー）</summary>
+      <button class="btn sub" id="cpTodo">未習得をコピー</button>
+      <button class="btn sub" id="cpAll">すべてをコピー</button><span class="smsg" id="cpMsg"></span>
+      <textarea class="out" id="cpArea" readonly placeholder="コピーできない場合はここから手動で選択"></textarea>
+    </details>
+    <div class="note">例文は学習用に作成したもの（ニュース原文の引用ではない）</div>
+  </section>
+</main>
+
+<div id="subbar" class="hidden"><div id="subtxt"></div></div>
+<div id="toast"><span id="toastMsg"></span><button id="undo">元に戻す</button></div>
+<audio id="audio" preload="auto"></audio>
+
+<script>
+"use strict";
+const SLOTS=5, GAS_KEY="en-news-gas", UI_KEY="en-news-ui";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+          set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+const fmt=s=>{s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
+
+/* ---------- 接続（GAS URL は端末内のみに保存） ---------- */
+let GAS=ls.get(GAS_KEY,"");
+(function fromHash(){
+  const m=/[#&]gas=([^&]+)/.exec(location.hash);
+  if(m){try{const u=decodeURIComponent(m[1]);
+      // 受け付けるのは GAS の /exec か、開発用の localhost のみ
+      if(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)||/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(u)){GAS=u;ls.set(GAS_KEY,GAS);}
+    }catch(e){} history.replaceState(null,"",location.pathname+location.search);}
+})();
+async function api(params){
+  const r=await fetch(GAS+"?"+new URLSearchParams(params),{redirect:"follow"});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  const j=await r.json();
+  if(j&&j.error) throw new Error(j.error);
+  return j;
+}
+
+/* ---------- IndexedDB キャッシュ（音声・データ） ---------- */
+const idb=(()=>{let p;const open=()=>p||(p=new Promise((res,rej)=>{const q=indexedDB.open("en-news",1);
+  q.onupgradeneeded=()=>q.result.createObjectStore("kv");q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);}));
+  const tx=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{const t=db.transaction("kv",mode);const rq=fn(t.objectStore("kv"));
+    t.oncomplete=()=>res(rq&&rq.result);t.onerror=()=>rej(t.error);}));
+  return {get:k=>tx("readonly",s=>s.get(k)).catch(()=>undefined),set:(k,v)=>tx("readwrite",s=>s.put(v,k)).catch(()=>{})};})();
+
+/* ---------- 画面切替 ---------- */
+let sessions=[], cur=null, mode="news";
+const ui=Object.assign({sub:true,script:true,follow:true,rate:1},ls.get(UI_KEY,{}));
+function show(view){
+  ["vSetup","vTop","vNews","vVocab"].forEach(v=>$("#"+v).classList.toggle("hidden",v!==view));
+  const inSess=view==="vNews"||view==="vVocab";
+  $("#back").classList.toggle("hidden",!inSess);
+  $("#modeTabs").classList.toggle("hidden",!inSess);
+  $("#player").classList.toggle("hidden",view!=="vNews");
+  $("#subbar").classList.toggle("hidden",!(view==="vNews"&&ui.sub));
+  if(!inSess) $("#title").textContent="English News";
+  window.scrollTo(0,0);
+}
+function showSetup(msg){ $("#gasUrl").value=GAS||""; $("#setupMsg").textContent=msg||""; show("vSetup"); }
+$("#saveGas").onclick=()=>{
+  const u=$("#gasUrl").value.trim();
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)){$("#setupMsg").textContent=" URLの形式が違う（…/exec で終わるもの）";return;}
+  GAS=u;ls.set(GAS_KEY,u);loadTop(true);
+};
+$("#reconf").onclick=()=>showSetup();
+$("#reload").onclick=()=>loadTop(true);
+$("#back").onclick=()=>{audio.pause();cur=null;renderTop();show("vTop");};
+
+/* ---------- Top ---------- */
+async function loadTop(force){
+  if(!GAS){showSetup();return;}
+  show("vTop");
+  const cached=ls.get("en-news-list",null);
+  if(cached&&!force){sessions=cached;renderTop();}
+  else $("#sessList").innerHTML='<div class="msg">読み込み中…</div>';
+  try{const j=await api({action:"list"});sessions=j.sessions||[];ls.set("en-news-list",sessions);if(!cur)renderTop();}
+  catch(e){if(!cached||force)$("#sessList").innerHTML=`<div class="msg err">読み込み失敗：${esc(e.message)}<br>接続設定のURLを確認</div>`;}
+}
+function renderTop(){
+  let h="";
+  for(let i=0;i<SLOTS;i++){
+    const s=sessions[i];
+    if(s){
+      const st=ls.get("en-news-vocab-"+s.id,{known:{}});
+      const k=Object.keys(st.known||{}).length;
+      h+=`<button class="sess" data-i="${i}"><span class="no">${i+1}</span><span><div class="tt en-font">${esc(s.title)}</div>
+        <div class="meta">${esc(s.date||"")}・${fmt(s.duration)}・単語 ${s.vocab||0}語（分かった ${k}）</div></span></button>`;
+    }else{
+      h+=`<div class="sess blank"><span class="no">${i+1}</span><span><div class="tt">Session ${i+1}</div><div class="meta">未登録</div></span></div>`;
+    }
+  }
+  $("#sessList").innerHTML=h;
+}
+$("#sessList").onclick=e=>{const b=e.target.closest("button.sess");if(b)openSession(sessions[+b.dataset.i]);};
+
+/* ---------- セッションを開く ---------- */
+const audio=$("#audio");
+let words=[], lines=[], wi=-1, li=-1, audioUrl=null, userScrollAt=0;
+async function openSession(meta){
+  cur={meta,data:null};
+  $("#title").textContent=meta.title;
+  setMode("news");
+  $("#script").innerHTML="";$("#subtxt").innerHTML="";
+  $("#newsMsg").classList.remove("hidden","err");$("#newsMsg").textContent="スクリプトを読み込み中…";
+  try{
+    const ver=meta.updated||0;
+    let d=await idb.get("data:"+meta.id);
+    if(!d||d.ver!==ver){d={ver,body:await api({action:"data",id:meta.id})};idb.set("data:"+meta.id,d);}
+    if(cur.meta!==meta)return;
+    cur.data=d.body;
+    buildScript();initVocab();
+    $("#newsMsg").textContent="音声を読み込み中…";
+    let a=await idb.get("audio:"+meta.id);
+    if(!a||a.ver!==ver){
+      const j=await api({action:"audio",id:meta.id});
+      const bin=atob(j.b64),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+      a={ver,blob:new Blob([u8],{type:j.mime||"audio/mpeg"})};idb.set("audio:"+meta.id,a);
+    }
+    if(cur.meta!==meta)return;
+    if(audioUrl)URL.revokeObjectURL(audioUrl);
+    audioUrl=URL.createObjectURL(a.blob);audio.src=audioUrl;audio.playbackRate=ui.rate;
+    $("#newsMsg").classList.add("hidden");
+  }catch(e){$("#newsMsg").classList.add("err");$("#newsMsg").textContent="読み込み失敗："+e.message;}
+}
+function setMode(m){
+  mode=m;$$("#modeTabs button").forEach(b=>b.classList.toggle("on",b.dataset.m===m));
+  show(m==="news"?"vNews":"vVocab");
+  if(m==="vocab"){audio.pause();renderVocab();}
+}
+$$("#modeTabs button").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+
+/* ---------- スクリプト＋カラオケ ---------- */
+function buildScript(){
+  words=[];lines=[];wi=-1;li=-1;
+  let h="";
+  cur.data.sections.forEach((sec,si)=>{
+    const t0=sec.lines[0].w[0][1];
+    h+=`<div class="sec ${sec.kind==="ad"?"ad":""}"><h2 data-t="${t0}">${esc(sec.title)}<small>${fmt(t0)}</small></h2>`;
+    sec.lines.forEach(l=>{
+      const lidx=lines.length;lines.push({first:words.length,last:words.length+l.w.length-1});
+      h+=`<p class="ln" data-l="${lidx}">`+l.w.map(w=>{const i=words.length;words.push({t:w[1],l:lidx,txt:w[0]});return `<span class="w" data-i="${i}">${esc(w[0])}</span>`;}).join(" ")+`</p>`;
+    });
+    h+=`</div>`;
+  });
+  $("#script").innerHTML=h;
+  words.forEach((w,i)=>w.el=null);
+  $$("#script .w").forEach(el=>words[+el.dataset.i].el=el);
+  lines.forEach((l,i)=>l.el=$(`#script .ln[data-l="${i}"]`));
+}
+function findWord(t){ // t 以前に始まる最後の語
+  let lo=0,hi=words.length-1,a=-1;
+  while(lo<=hi){const m=(lo+hi)>>1;if(words[m].t<=t+0.05){a=m;lo=m+1;}else hi=m-1;}
+  return a;
+}
+function paint(force){
+  if(!words.length)return;
+  const t=audio.currentTime,n=findWord(t);
+  if(n!==wi||force){
+    const a=Math.min(wi,n),b=Math.max(wi,n);
+    if(force){words.forEach((w,i)=>{w.el.classList.toggle("past",i<n);w.el.classList.toggle("cur",i===n);});}
+    else for(let i=Math.max(a,0);i<=b;i++){words[i].el.classList.toggle("past",i<n);words[i].el.classList.toggle("cur",i===n);}
+    wi=n;
+    const nl=n<0?-1:words[n].l;
+    if(nl!==li||force){
+      if(li>=0)lines[li].el.classList.remove("on");
+      li=nl;
+      if(li>=0){lines[li].el.classList.add("on");
+        if(ui.follow&&ui.script&&mode==="news"&&Date.now()-userScrollAt>2500) lines[li].el.scrollIntoView({block:"center",behavior:"smooth"});}
+      renderSub();
+    }
+    paintSub();
+  }
+  $("#time").textContent=fmt(t)+" / "+fmt(audio.duration||cur?.meta.duration);
+  if(!seeking&&audio.duration)$("#seek").value=t/audio.duration*100;
+}
+function renderSub(){
+  if(li<0){$("#subtxt").innerHTML="";return;}
+  const l=lines[li];let h="";
+  for(let i=l.first;i<=l.last;i++)h+=`<span class="w" data-i="${i}">${esc(words[i].txt)}</span> `;
+  $("#subtxt").innerHTML=h;
+}
+function paintSub(){ $$("#subtxt .w").forEach(el=>{const i=+el.dataset.i;el.classList.toggle("past",i<wi);el.classList.toggle("cur",i===wi);}); }
+let raf=0;
+function loop(){paint();raf=audio.paused?0:requestAnimationFrame(loop);}
+audio.addEventListener("play",()=>{$("#play").textContent="❚❚";if(!raf)loop();});
+audio.addEventListener("pause",()=>{$("#play").textContent="▶";});
+audio.addEventListener("ended",()=>{$("#play").textContent="▶";});
+audio.addEventListener("seeked",()=>paint(true));
+audio.addEventListener("loadedmetadata",()=>paint(true));
+audio.addEventListener("timeupdate",()=>{if(!raf)paint();});
+$("#play").onclick=()=>{if(!audio.src)return;audio.paused?audio.play():audio.pause();};
+$("#rw").onclick=()=>{audio.currentTime=Math.max(0,audio.currentTime-5);};
+$("#ff").onclick=()=>{audio.currentTime=Math.min(audio.duration||1e9,audio.currentTime+5);};
+const RATES=[0.75,0.9,1,1.25];
+function setRate(r){ui.rate=r;audio.playbackRate=r;$("#speed").textContent=r.toFixed(r===0.75||r===1.25?2:1)+"x";ls.set(UI_KEY,ui);}
+$("#speed").onclick=()=>setRate(RATES[(RATES.indexOf(ui.rate)+1)%RATES.length]);
+let seeking=false;
+$("#seek").oninput=()=>{seeking=true;};
+$("#seek").onchange=e=>{if(audio.duration)audio.currentTime=e.target.value/100*audio.duration;seeking=false;};
+function seekPlay(t){userScrollAt=0;audio.currentTime=Math.max(0,t-0.05);audio.play();}
+$("#script").onclick=e=>{
+  const w=e.target.closest(".w"),h=e.target.closest("h2");
+  if(w)seekPlay(words[+w.dataset.i].t);else if(h)seekPlay(+h.dataset.t);
+};
+["wheel","touchmove"].forEach(ev=>window.addEventListener(ev,()=>{userScrollAt=Date.now();},{passive:true}));
+function applyUi(){
+  $("#tSub").classList.toggle("on",ui.sub);$("#tScript").classList.toggle("on",ui.script);$("#tFollow").classList.toggle("on",ui.follow);
+  document.body.classList.toggle("noscript",!ui.script);
+  $("#subbar").classList.toggle("hidden",!(mode==="news"&&cur&&ui.sub&&!$("#vNews").classList.contains("hidden")));
+  ls.set(UI_KEY,ui);
+}
+$("#tSub").onclick=()=>{ui.sub=!ui.sub;applyUi();};
+$("#tScript").onclick=()=>{ui.script=!ui.script;applyUi();};
+$("#tFollow").onclick=()=>{ui.follow=!ui.follow;applyUi();};
+
+/* ---------- 単語（元アプリ「英単語・熟語リスト」準拠。意味は既定で隠す） ---------- */
+let state, filter="todo", vkey="";
+function initVocab(){
+  vkey="en-news-vocab-"+cur.meta.id;
+  state=Object.assign({known:{},custom:[],deleted:{},hideJa:true},ls.get(vkey,{}));
+  filter="todo";$$("#vTabs button").forEach(b=>b.classList.toggle("on",b.dataset.f==="todo"));$("#q").value="";
+}
+const save=()=>ls.set(vkey,state);
+const all=()=>cur.data.vocab.map((r,i)=>({id:"s"+i,en:r.en,ja:r.ja,use:r.use,src:r.src})).concat(state.custom).filter(w=>!state.deleted[w.id]);
+const plain=t=>String(t||"").replace(/\[\[|\]\]/g,"");
+function hl(w){
+  const s=w.use||"";
+  if(s.includes("[[")) return esc(s).replace(/\[\[(.+?)\]\]/g,"<mark>$1</mark>");
+  const key=w.en.replace(/[（(].*?[)）]/g,"").replace(/~|＋.*$/g,"").split("/")[0].trim();
+  const i=key?s.toLowerCase().indexOf(key.toLowerCase()):-1;
+  if(i<0) return esc(s);
+  return esc(s.slice(0,i))+"<mark>"+esc(s.slice(i,i+key.length))+"</mark>"+esc(s.slice(i+key.length));
+}
+function renderVocab(){
+  if(!cur||!cur.data)return;
+  const q=$("#q").value.trim().toLowerCase(), ws=all();
+  const known=ws.filter(w=>state.known[w.id]).length;
+  $("#stats").textContent=`全${ws.length}語 ／ 未習得 ${ws.length-known} ／ 分かった ${known}`;
+  document.body.classList.toggle("hide",!!state.hideJa);$("#hideJa").checked=!!state.hideJa;
+  const rows=ws.filter(w=>filter==="all"||(filter==="known")===!!state.known[w.id])
+    .filter(w=>!q||(w.en+w.ja+plain(w.use)).toLowerCase().includes(q));
+  $("#list").innerHTML=rows.length?rows.map(w=>{
+    const k=!!state.known[w.id];
+    return `<div class="card ${k?"known":""}" data-card="${w.id}">
+      ${w.use?`<p class="sent">${hl(w)}</p>`:""}
+      <div class="word"><span class="en">${esc(w.en)}</span><span class="ja">${esc(w.ja)}</span></div>
+      <div class="foot">${w.src?`<span class="src">${esc(w.src)}</span>`:""}
+        <div class="acts"><button class="ok" data-id="${w.id}">${k?"未習得に戻す":"分かった ✓"}</button>
+        <button class="del" data-del="${w.id}" title="削除">×</button></div></div></div>`;}).join("")
+    :`<div class="msg">${filter==="todo"?"未習得の単語はなし 🎉":"該当なし"}</div>`;
+}
+let undoFn=null,toastT=null;
+function toast(msg,fn){undoFn=fn;$("#toastMsg").textContent=msg;$("#toast").classList.add("on");
+  clearTimeout(toastT);toastT=setTimeout(()=>{$("#toast").classList.remove("on");undoFn=null;},4000);}
+$("#undo").onclick=()=>{if(undoFn){undoFn();undoFn=null;}$("#toast").classList.remove("on");};
+function animateOut(id,after){const c=document.querySelector(`[data-card="${id}"]`);
+  if(!c||filter==="all"){after();return;} c.classList.add("out");setTimeout(after,230);}
+$$("#vTabs button").forEach(b=>b.onclick=()=>{$$("#vTabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");filter=b.dataset.f;renderVocab();});
+$("#q").oninput=renderVocab;
+$("#hideJa").onchange=e=>{state.hideJa=e.target.checked;save();renderVocab();};
+$("#list").onclick=e=>{
+  if(e.target.classList.contains("ja")&&state.hideJa){e.target.classList.toggle("shown");return;}
+  const id=e.target.dataset.id,d=e.target.dataset.del;
+  if(id){const was=!!state.known[id];
+    animateOut(id,()=>{was?delete state.known[id]:state.known[id]=true;save();renderVocab();
+      toast(was?"未習得に戻した":"分かった に移動",()=>{was?state.known[id]=true:delete state.known[id];save();renderVocab();});});}
+  if(d){
+    if(e.target.dataset.armed){const cust=state.custom.find(w=>w.id===d);
+      animateOut(d,()=>{state.deleted[d]=true;state.custom=state.custom.filter(w=>w.id!==d);save();renderVocab();
+        toast("削除した",()=>{delete state.deleted[d];if(cust)state.custom.push(cust);save();renderVocab();});});
+    }else{e.target.dataset.armed="1";e.target.textContent="削除?";setTimeout(()=>{if(e.target.isConnected){delete e.target.dataset.armed;e.target.textContent="×";}},2500);}
+  }
+};
+$("#addBtn").onclick=()=>{
+  const en=$("#aEn").value.trim(),ja=$("#aJa").value.trim();
+  if(!en||!ja){$("#addMsg").textContent="英語と意味は必須";return;}
+  state.custom.push({id:"c"+Date.now(),en,ja,use:$("#aUse").value.trim(),src:$("#aSrc").value.trim()});
+  save();["#aEn","#aJa","#aUse","#aSrc"].forEach(s=>$(s).value="");
+  $("#addMsg").textContent="追加済み";setTimeout(()=>$("#addMsg").textContent="",1500);renderVocab();
+};
+async function copy(onlyTodo){
+  const t=all().filter(w=>!onlyTodo||!state.known[w.id]).map(w=>[w.en,w.ja,plain(w.use)].join("\t")).join("\n");
+  $("#cpArea").value="英語\t意味\t例文\n"+t;
+  try{await navigator.clipboard.writeText($("#cpArea").value);$("#cpMsg").textContent="コピー済み";}
+  catch(e){$("#cpMsg").textContent="下の欄から手動でコピー";}
+  setTimeout(()=>$("#cpMsg").textContent="",2000);
+}
+$("#cpTodo").onclick=()=>copy(true);$("#cpAll").onclick=()=>copy(false);
+
+/* ---------- 起動 ---------- */
+setRate(RATES.includes(ui.rate)?ui.rate:1);applyUi();loadTop(false);
+</script>
+</body>
+</html>
