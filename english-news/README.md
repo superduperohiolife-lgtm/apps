@@ -29,7 +29,7 @@
 ### sNN.json の形式
 ```json
 {
-  "id": "s01", "title": "番組名など", "date": "YYYY-MM-DD", "duration": 464.5,
+  "id": "s01", "title": "番組名など", "date": "YYYY-MM-DD（録音日。Top と画面上部には「2026年11月13日（金）」の形で表示。無い時は title を表示）", "duration": 464.5,
   "sections": [{"title": "見出し", "kind": "news", "lines": [{"w": [["単語", 開始秒], ...]}]}],
   "vocab": [{"en": "英語", "ja": "意味", "use": "例文（[[ ]]で強調）", "src": "出典"}],
   "vocabVer": 2

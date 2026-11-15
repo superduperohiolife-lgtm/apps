@@ -260,6 +260,13 @@ async function loadTop(force){
   try{const j=await api({action:"list"});sessions=j.sessions||[];ls.set("en-news-list",sessions);if(!cur)renderTop();}
   catch(e){if(!cached||force)$("#sessList").innerHTML=`<div class="msg err">読み込み失敗：${esc(e.message)}<br>接続設定のURLを確認</div>`;}
 }
+// 日付表示（例：2026年11月13日（金））。同じ番組しか聞かないので、タイトルの代わりに録音日で区別する
+function dateLabel(d){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||"");
+  if(!m) return "";
+  const wd="日月火水木金土"[new Date(+m[1],+m[2]-1,+m[3]).getDay()];
+  return `${+m[1]}年${+m[2]}月${+m[3]}日（${wd}）`;
+}
 function renderTop(){
   let h="";
   for(let i=0;i<SLOTS;i++){
@@ -267,8 +274,8 @@ function renderTop(){
     if(s){
       const st=ls.get("en-news-vocab-"+s.id,{known:{}});
       const k=Object.keys(st.known||{}).length;
-      h+=`<button class="sess" data-i="${i}"><span class="no">${i+1}</span><span><div class="tt en-font">${esc(s.title)}</div>
-        <div class="meta">${esc(s.date||"")}・${fmt(s.duration)}・単語 ${s.vocab||0}語（分かった ${k}）</div></span></button>`;
+      h+=`<button class="sess" data-i="${i}"><span class="no">${i+1}</span><span><div class="tt">${esc(dateLabel(s.date)||s.title)}</div>
+        <div class="meta">${fmt(s.duration)}・単語 ${s.vocab||0}語（分かった ${k}）</div></span></button>`;
     }else{
       h+=`<div class="sess blank"><span class="no">${i+1}</span><span><div class="tt">Session ${i+1}</div><div class="meta">未登録</div></span></div>`;
     }
@@ -282,7 +289,7 @@ const audio=$("#audio");
 let words=[], lines=[], wi=-1, li=-1, audioUrl=null, userScrollAt=0;
 async function openSession(meta){
   cur={meta,data:null};
-  $("#title").textContent=meta.title;
+  $("#title").textContent=dateLabel(meta.date)||meta.title;
   setMode("news");
   $("#script").innerHTML="";$("#subtxt").innerHTML="";
   $("#newsMsg").classList.remove("hidden","err");$("#newsMsg").textContent="スクリプトを読み込み中…";
