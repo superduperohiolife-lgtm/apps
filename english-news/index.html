@@ -170,7 +170,7 @@
       <button data-f="knew">知ってる</button>
       <button data-f="all">すべて</button>
     </div>
-    <div class="hint" style="margin:-2px 0 8px">「分かった ✓」＝今回覚えた語（レベル相応）／「知ってる」＝もともと知っていた語（レベル不相応）</div>
+    <div class="hint" style="margin:-2px 0 8px">「知ってる」＝もともと知っていた語（レベル不相応）／「分かった ✓」＝今回覚えた語（レベル相応）</div>
     <input type="search" id="q" placeholder="英語・意味・例文で検索" style="margin-bottom:10px">
     <div id="list"></div>
     <details>
@@ -461,7 +461,7 @@ function renderVocab(){
   $("#list").innerHTML=rows.length?rows.map(w=>{
     const st=statusOf(w.id),id=esc(w.id);
     const btns=st==="todo"
-      ?`<button class="ok" data-id="${id}" data-act="known">分かった ✓</button><button class="ok alt" data-id="${id}" data-act="knew">知ってる</button>`
+      ?`<button class="ok alt" data-id="${id}" data-act="knew">知ってる</button><button class="ok" data-id="${id}" data-act="known">分かった ✓</button>`
       :`<button class="ok" data-id="${id}" data-act="todo">未習得に戻す</button>`;
     return `<div class="card ${st!=="todo"?"known":""}" data-card="${id}">
       ${w.use?`<p class="sent">${hl(w)}</p>`:""}
