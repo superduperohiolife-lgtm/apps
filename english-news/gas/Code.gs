@@ -120,3 +120,10 @@ function listSessions_(folder) {
     };
   });
 }
+
+// 初回だけエディタから実行する：外部への通信（UrlFetchApp）の権限を承認するための関数
+function authorizeFetch() {
+  UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }
+  });
+}
