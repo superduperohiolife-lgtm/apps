@@ -81,14 +81,18 @@
   .card.out{opacity:0;transform:translateX(40px)}
   .sent{font-family:Calibri,"Segoe UI",system-ui,sans-serif;font-size:20px;line-height:1.55;margin:0 0 12px}
   .sent mark{background:var(--hl);color:var(--hlink);font-weight:700;padding:0 3px;border-radius:4px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
-  .word{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;border-top:1px dashed var(--line);padding-top:8px}
+  .wrow{display:flex;align-items:center;gap:10px;border-top:1px dashed var(--line);padding-top:8px}
+  .word{flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
+  .rev{flex:none;min-width:64px;min-height:42px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--sub);font-size:13px;white-space:nowrap}
+  .rev.on{background:var(--acc2);border-color:var(--acc);color:var(--acc)}
+  body:not(.hide) .rev{display:none}
   .en{font-family:Calibri,"Segoe UI",system-ui,sans-serif;font-weight:700;font-size:15px;color:var(--acc)}
   .ja{font-size:14px}
   .hide .ja{filter:blur(6px);cursor:pointer;user-select:none;-webkit-user-select:none}
   .ja.shown{filter:none!important}
   .foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px}
   .src{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--acc2);color:var(--acc)}
-  .acts{display:flex;gap:6px;align-items:center;margin-left:auto}
+  .acts{display:flex;gap:18px;align-items:center;margin-left:auto}
   .ok{padding:7px 14px;border-radius:8px;border:none;background:var(--acc);color:#fff;font-size:13px;white-space:nowrap}
   .card.known .ok{background:var(--card);color:var(--ink);border:1px solid var(--line)}
   .card.known .sent,.card.known .en,.card.known .ja{color:var(--known)}
@@ -465,7 +469,8 @@ function renderVocab(){
       :`<button class="ok" data-id="${id}" data-act="todo">未習得に戻す</button>`;
     return `<div class="card ${st!=="todo"?"known":""}" data-card="${id}">
       ${w.use?`<p class="sent">${hl(w)}</p>`:""}
-      <div class="word"><span class="en">${esc(w.en)}</span><span class="ja">${esc(w.ja)}</span></div>
+      <div class="wrow"><div class="word"><span class="en">${esc(w.en)}</span><span class="ja">${esc(w.ja)}</span></div>
+        <button class="rev" data-rev="1" aria-label="和訳を表示／隠す">和訳</button></div>
       <div class="foot">${w.src?`<span class="src">${esc(w.src)}</span>`:""}${st==="knew"?`<span class="src">知ってる</span>`:st==="known"&&filter==="all"?`<span class="src">分かった</span>`:""}
         <div class="acts">${btns}</div></div></div>`;}).join("")
     :`<div class="msg">${empty[filter]||"該当なし"}</div>`;
@@ -480,7 +485,10 @@ $$("#vTabs button").forEach(b=>b.onclick=()=>{$$("#vTabs button").forEach(x=>x.c
 $("#q").oninput=renderVocab;
 $("#hideJa").onchange=e=>{state.hideJa=e.target.checked;save();renderVocab();};
 $("#list").onclick=e=>{
-  if(e.target.classList.contains("ja")&&state.hideJa){e.target.classList.toggle("shown");return;}
+  // 和訳のぼかしを外す：ぼかし部分のタップ、または右端の「和訳」ボタン（もう一度押すと隠す）
+  if((e.target.classList.contains("ja")||e.target.dataset.rev)&&state.hideJa){
+    const row=e.target.closest(".wrow"),ja=row.querySelector(".ja"),on=ja.classList.toggle("shown");
+    row.querySelector(".rev").classList.toggle("on",on);return;}
   const id=e.target.dataset.id,act=e.target.dataset.act;
   if(!id||!act)return;
   const was=statusOf(id),msg={known:"分かった に移動",knew:"知ってる に移動",todo:"未習得に戻した"}[act];
